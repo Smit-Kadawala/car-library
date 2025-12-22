@@ -1,10 +1,22 @@
 import { apiClient } from "../config/api";
 import { Car, CarDetail } from "../types/Car";
 
+export type SortOption = {
+  sortBy: "name" | "createdAt";
+  sortOrder: "ASC" | "DESC";
+};
+
 export const carService = {
-  // Get all cars
-  getAllCars: async (): Promise<Car[]> => {
-    const response = await apiClient.get<Car[]>("/api/cars");
+  // Get all cars with optional sorting
+  getAllCars: async (sortOption?: SortOption): Promise<Car[]> => {
+    const params: Record<string, string> = {};
+
+    if (sortOption) {
+      params.sortBy = sortOption.sortBy;
+      params.sortOrder = sortOption.sortOrder;
+    }
+
+    const response = await apiClient.get<Car[]>("/api/cars", { params });
     return response.data;
   },
 

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CarCard } from "../components/CarCard";
+import { SortModal, SortOption } from "../components/SortModal";
 import { useCars } from "../hooks/useCars";
 import { BottomTabParamList, RootStackParamList } from "../navigation/types";
 import { Car } from "../types/Car";
@@ -29,16 +30,27 @@ type CarLibraryScreenProps = {
 
 export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
   const [search, setSearch] = useState("");
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>({
+    sortBy: "createdAt",
+    sortOrder: "DESC",
+  });
 
-  // Use React Query hook
-  const { data: cars, isLoading, error } = useCars();
+  // Use React Query hook with sort option
+  const { data: cars, isLoading, error, refetch } = useCars(sortOption);
 
   const handleCardPress = (car: Car) => {
     navigation.navigate("CarDetail", { car });
   };
 
+  const handleSortSelect = (option: SortOption) => {
+    setSortOption(option);
+    // Force refetch with new sort option
+    setTimeout(() => refetch(), 100);
+  };
+
   // Filter cars based on search
-  const filteredCars = cars?.filter((car: Car) =>
+  const filteredCars = cars?.filter((car) =>
     car.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -91,11 +103,15 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
             placeholderTextColor="#7c7c7c"
           />
         </View>
-        <TouchableOpacity style={styles.iconButton} accessibilityLabel="Sort">
+        <TouchableOpacity
+          style={styles.iconButton}
+          accessibilityLabel="Sort"
+          onPress={() => setSortModalVisible(true)}
+        >
           <Ionicons name="swap-vertical" size={20} color="#1a1a1a" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} accessibilityLabel="Filter">
-          <Ionicons name="options-outline" size={20} color="#1a1a1a" />
+          <Ionicons name="funnel-outline" size={20} color="#1a1a1a" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} accessibilityLabel="Select">
           <Ionicons name="checkmark-circle-outline" size={20} color="#1a1a1a" />
@@ -111,6 +127,13 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+      />
+
+      <SortModal
+        visible={sortModalVisible}
+        onClose={() => setSortModalVisible(false)}
+        onSelect={handleSortSelect}
+        currentSort={sortOption}
       />
     </SafeAreaView>
   );

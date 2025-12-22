@@ -1,21 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { carService } from "../services/carService";
-import type { Car, CarDetail } from "../types/Car";
 
-// Get all cars
-export const useCars = () =>
-  useQuery<Car[], Error>({
-    queryKey: ["cars"],
-    queryFn: carService.getAllCars,
+export type SortOption = {
+  sortBy: "name" | "createdAt";
+  sortOrder: "ASC" | "DESC";
+};
+
+// Get all cars with optional sorting
+export const useCars = (sortOption?: SortOption) => {
+  return useQuery({
+    queryKey: ["cars", sortOption],
+    queryFn: () => carService.getAllCars(sortOption),
   });
+};
 
 // Get single car by ID
-export const useCar = (id: string) =>
-  useQuery<CarDetail, Error>({
+export const useCar = (id: string) => {
+  return useQuery({
     queryKey: ["cars", id],
     queryFn: () => carService.getCarById(id),
-    enabled: !!id, // Only run if id exists
+    enabled: !!id,
   });
+};
 
 // Delete car
 export const useDeleteCar = () => {

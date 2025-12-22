@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -13,11 +13,10 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCar, useDeleteCar } from "../hooks/useCars";
 import { RootStackParamList } from "../navigation/types";
-import { CarDetail } from "../types/Car";
 
 const FALLBACK_IMAGE = require("../assets/fallback.png");
-const BASE_URL = "https://cars-mock-api-new-6e7a623e6570.herokuapp.com";
 
 type CarDetailScreenProps = NativeStackScreenProps<
   RootStackParamList,
@@ -29,33 +28,38 @@ export const CarDetailScreen = ({
   navigation,
 }: CarDetailScreenProps) => {
   const { car } = route.params;
-  const [carDetail, setCarDetail] = useState<CarDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    const fetchCarDetail = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`${BASE_URL}/api/cars/${car.id}`);
-        const data = await response.json();
-        setCarDetail(data);
-      } catch (error) {
-        console.error("Failed to fetch car details", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCarDetail();
-  }, [car.id]);
+  // ✅ Use React Query hooks
+  const { data: carDetail, isLoading, error } = useCar(car.id);
+  const deleteCar = useDeleteCar();
 
   const source = failed ? FALLBACK_IMAGE : { uri: car.imageUrl };
   const isAutomatic = carDetail?.carType === "automatic";
 
-  // Loading State
-  if (loading) {
+  const handleDelete = () => {
+    Alert.alert("Delete Car", "Are you sure you want to delete this car?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          deleteCar.mutate(carDetail!.id, {
+            onSuccess: () => {
+              Alert.alert("Success", "Car deleted successfully");
+              navigation.goBack();
+            },
+            onError: () => {
+              Alert.alert("Error", "Failed to delete car");
+            },
+          });
+        },
+      },
+    ]);
+  };
+
+  if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -67,7 +71,7 @@ export const CarDetailScreen = ({
     );
   }
 
-  if (!carDetail) {
+  if (error || !carDetail) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -87,11 +91,6 @@ export const CarDetailScreen = ({
     });
   };
 
-  const handleDelete = () => {
-    // Add delete functionality here
-    console.log("Delete car:", carDetail.id);
-  };
-
   const typeColors = isAutomatic
     ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
     : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
@@ -100,14 +99,8 @@ export const CarDetailScreen = ({
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      {/* Close button at top right */}
       <TouchableOpacity
-        style={[
-          styles.closeButton,
-          {
-            top: Platform.OS === "android" ? insets.top + 16 : 16,
-          },
-        ]}
+        style={[styles.closeButton, { top: insets.top + 16 }]}
         onPress={() => navigation.goBack()}
       >
         <Ionicons name="close" size={28} color="#333" />
@@ -119,15 +112,13 @@ export const CarDetailScreen = ({
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: Platform.OS === "android" ? insets.top + 60 : 60,
+            paddingTop: insets.top + 60,
             paddingBottom: insets.bottom + 20,
           },
         ]}
       >
-        {/* Car Name */}
         <Text style={styles.carName}>{carDetail.name}</Text>
 
-        {/* Card-style Image Container */}
         <View style={styles.imageCard}>
           <Image
             source={source}
@@ -137,28 +128,24 @@ export const CarDetailScreen = ({
           />
         </View>
 
-        {/* Car Type Badge - Left aligned after image */}
         <View style={[styles.carTypeBadge, typeColors]}>
           <Text style={[styles.carTypeText, { color: typeColors.color }]}>
             {carDetail.carType}
           </Text>
         </View>
 
-        {/* Description */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>DESCRIPTION</Text>
           <Text style={styles.description}>{carDetail.description}</Text>
         </View>
 
-        {/* Divider Line */}
         <View style={styles.divider} />
 
-        {/* Tags */}
         {carDetail.tags && carDetail.tags.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>TAG</Text>
             <View style={styles.tagsContainer}>
-              {carDetail.tags.map((tag, index) => (
+              {carDetail.tags.map((tag: string, index: number) => (
                 <View key={index} style={styles.tag}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
@@ -167,11 +154,18 @@ export const CarDetailScreen = ({
           </View>
         )}
 
-        {/* Last Update Row with Date and Delete Icon */}
         <View style={styles.footerRow}>
           <Text style={styles.dateText}>{formatDate(carDetail.createdAt)}</Text>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={24} color="#d32f2f" />
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={handleDelete}
+            disabled={deleteCar.isPending}
+          >
+            {deleteCar.isPending ? (
+              <ActivityIndicator size="small" color="#d32f2f" />
+            ) : (
+              <Ionicons name="trash-outline" size={24} color="#d32f2f" />
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

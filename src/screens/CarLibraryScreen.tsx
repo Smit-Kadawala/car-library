@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { CompositeNavigationProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CarCard } from "../components/CarCard";
+import { useCars } from "../hooks/useCars";
 import { BottomTabParamList, RootStackParamList } from "../navigation/types";
 import { Car } from "../types/Car";
 
@@ -27,38 +28,36 @@ type CarLibraryScreenProps = {
 };
 
 export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
-  const [apiData, setApiData] = useState<Car[]>([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchCars = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          "https://cars-mock-api-new-6e7a623e6570.herokuapp.com/api/cars"
-        );
-        const data = await response.json();
-        setApiData(data);
-      } catch (error) {
-        console.warn("Failed to load cars", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCars();
-  }, []);
+  // Use React Query hook
+  const { data: cars, isLoading, error } = useCars();
 
   const handleCardPress = (car: Car) => {
     navigation.navigate("CarDetail", { car });
   };
 
-  if (loading) {
+  // Filter cars based on search
+  const filteredCars = cars?.filter((car: Car) =>
+    car.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1f8ef1" />
           <Text style={styles.loadingText}>Loading cars...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Failed to load cars</Text>
         </View>
       </SafeAreaView>
     );
@@ -70,14 +69,12 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-      {/* Header - Moved outside FlatList */}
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>New Car</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search Row - Moved outside FlatList */}
       <View style={styles.searchRow}>
         <View style={styles.searchInputContainer}>
           <Ionicons
@@ -105,9 +102,8 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         </TouchableOpacity>
       </View>
 
-      {/* FlatList - Without ListHeaderComponent */}
       <FlatList
-        data={apiData}
+        data={filteredCars}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         numColumns={2}
@@ -193,5 +189,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: "#666",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#d32f2f",
+    fontWeight: "600",
   },
 });

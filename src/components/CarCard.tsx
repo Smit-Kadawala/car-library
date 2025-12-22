@@ -31,9 +31,6 @@ export const CarCard = ({ item, onPress }: CarCardProps) => {
         onError={() => setFailed(true)}
       />
 
-      {/* Dark overlay for better text readability */}
-      <View style={styles.overlay} />
-
       <View style={styles.cardContent}>
         <Text style={styles.carName} numberOfLines={1}>
           {item.name}
@@ -58,14 +55,6 @@ const styles = StyleSheet.create({
   cardImage: {
     width: "100%",
     height: "100%",
-  },
-  overlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
   cardContent: {
     position: "absolute",

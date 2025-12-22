@@ -1,0 +1,311 @@
+import { Ionicons } from "@expo/vector-icons";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Image } from "expo-image";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { RootStackParamList } from "../navigation/types";
+import { CarDetail } from "../types/Car";
+
+const FALLBACK_IMAGE = require("../assets/fallback.png");
+const BASE_URL = "https://cars-mock-api-new-6e7a623e6570.herokuapp.com";
+
+type CarDetailScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  "CarDetail"
+>;
+
+export const CarDetailScreen = ({
+  route,
+  navigation,
+}: CarDetailScreenProps) => {
+  const { car } = route.params;
+  const [carDetail, setCarDetail] = useState<CarDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    const fetchCarDetail = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${BASE_URL}/api/cars/${car.id}`);
+        const data = await response.json();
+        setCarDetail(data);
+      } catch (error) {
+        console.error("Failed to fetch car details", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCarDetail();
+  }, [car.id]);
+
+  const source = failed ? FALLBACK_IMAGE : { uri: car.imageUrl };
+  const isAutomatic = carDetail?.carType === "automatic";
+
+  // Loading State
+  if (loading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1f8ef1" />
+          <Text style={styles.loadingText}>Loading car details...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!carDetail) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Failed to load car details</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  };
+
+  const handleDelete = () => {
+    // Add delete functionality here
+    console.log("Delete car:", carDetail.id);
+  };
+
+  const typeColors = isAutomatic
+    ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
+    : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+      {/* Close button at top right */}
+      <TouchableOpacity
+        style={[
+          styles.closeButton,
+          {
+            top: Platform.OS === "android" ? insets.top + 16 : 16,
+          },
+        ]}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="close" size={28} color="#333" />
+      </TouchableOpacity>
+
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Platform.OS === "android" ? insets.top + 60 : 60,
+            paddingBottom: insets.bottom + 20,
+          },
+        ]}
+      >
+        {/* Car Name */}
+        <Text style={styles.carName}>{carDetail.name}</Text>
+
+        {/* Card-style Image Container */}
+        <View style={styles.imageCard}>
+          <Image
+            source={source}
+            style={styles.carImage}
+            contentFit="cover"
+            onError={() => setFailed(true)}
+          />
+        </View>
+
+        {/* Car Type Badge - Left aligned after image */}
+        <View style={[styles.carTypeBadge, typeColors]}>
+          <Text style={[styles.carTypeText, { color: typeColors.color }]}>
+            {carDetail.carType}
+          </Text>
+        </View>
+
+        {/* Description */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>DESCRIPTION</Text>
+          <Text style={styles.description}>{carDetail.description}</Text>
+        </View>
+
+        {/* Divider Line */}
+        <View style={styles.divider} />
+
+        {/* Tags */}
+        {carDetail.tags && carDetail.tags.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>TAG</Text>
+            <View style={styles.tagsContainer}>
+              {carDetail.tags.map((tag, index) => (
+                <View key={index} style={styles.tag}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Last Update Row with Date and Delete Icon */}
+        <View style={styles.footerRow}>
+          <Text style={styles.dateText}>{formatDate(carDetail.createdAt)}</Text>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={24} color="#d32f2f" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  closeButton: {
+    position: "absolute",
+    right: 16,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#d32f2f",
+    fontWeight: "600",
+  },
+  carName: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 20,
+  },
+  imageCard: {
+    width: "100%",
+    height: 220,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#f7f7f7",
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  carImage: {
+    width: "100%",
+    height: "100%",
+  },
+  carTypeBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  carTypeText: {
+    fontWeight: "600",
+    fontSize: 14,
+    textTransform: "capitalize",
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionLabel: {
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginBottom: 20,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  tag: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1f8ef1",
+  },
+  tagText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f8ef1",
+    textTransform: "capitalize",
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 20,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#999",
+    fontWeight: "500",
+  },
+  deleteButton: {
+    padding: 8,
+  },
+});

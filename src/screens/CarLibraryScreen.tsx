@@ -158,6 +158,7 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
           style={styles.primaryButton}
           onPress={() => navigation.navigate("AddCar")}
         >
+          <Ionicons name="add" size={16} color="#fff" />
           <Text style={styles.primaryButtonText}>New Car</Text>
         </TouchableOpacity>
       </View>
@@ -244,12 +245,6 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.column}
-        contentContainerStyle={
-          [
-            // styles.listContent,
-            // memoizedCars.length === 0 && styles.flexGrow,
-          ]
-        }
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -301,15 +296,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   primaryButton: {
-    backgroundColor: "#1f8ef1",
+    flexDirection: "row",
+    backgroundColor: "#9B72D2",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 999,
   },
   primaryButtonText: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 14,
+    paddingHorizontal: 4,
   },
   searchRow: {
     flexDirection: "row",
@@ -364,14 +361,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#666",
   },
-  listContent: {
-    paddingBottom: 16,
-  },
   column: {
     gap: 12,
-  },
-  flexGrow: {
-    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,

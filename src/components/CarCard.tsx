@@ -13,9 +13,9 @@ type CarCardProps = {
 export const CarCard = ({ item, onPress }: CarCardProps) => {
   const [failed, setFailed] = useState(false);
   const isAutomatic = item.carType === "automatic";
-  const typeColors = isAutomatic
-    ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
-    : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
+  const typeColors = !isAutomatic
+    ? { backgroundColor: "#D6F9DB", borderColor: "#D6F9DB", color: "#10A024" }
+    : { backgroundColor: "#F5E7D0", borderColor: "#F5E7D0", color: "#997C4C" };
   const source = failed ? FALLBACK_IMAGE : { uri: item.imageUrl };
 
   return (

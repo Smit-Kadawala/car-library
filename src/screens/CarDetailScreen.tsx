@@ -99,9 +99,9 @@ export const CarDetailScreen = ({
     });
   };
 
-  const typeColors = isAutomatic
-    ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
-    : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
+  const typeColors = !isAutomatic
+    ? { backgroundColor: "#D6F9DB", borderColor: "#D6F9DB", color: "#10A024" }
+    : { backgroundColor: "#F5E7D0", borderColor: "#F5E7D0", color: "#997C4C" };
 
   return (
     <View style={styles.container}>
@@ -183,7 +183,9 @@ export const CarDetailScreen = ({
         visible={deleteModalVisible}
         carName={carDetail.name}
         onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          handleDeleteConfirm;
+        }}
         isDeleting={deleteCar.isPending}
       />
     </View>
@@ -296,12 +298,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#1f8ef1",
+    borderColor: "#9B72D2",
   },
   tagText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1f8ef1",
     textTransform: "capitalize",
   },
   footerRow: {

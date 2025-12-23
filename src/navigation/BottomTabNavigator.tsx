@@ -27,7 +27,7 @@ export const BottomTabNavigator = () => {
           } else if (route.name === "CarLibrary") {
             iconName = focused ? "car-sport" : "car-sport-outline";
           } else if (route.name === "Service") {
-            iconName = focused ? "construct" : "construct-outline";
+            iconName = focused ? "grid" : "grid-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
           } else {
@@ -36,11 +36,11 @@ export const BottomTabNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: "#1f8ef1",
+        tabBarActiveTintColor: "#9B72D2",
         tabBarInactiveTintColor: "#999",
         tabBarStyle: {
           paddingTop: 8,
-          backgroundColor: "#fff",
+          backgroundColor: "#000",
           borderTopWidth: 1,
           borderTopColor: "#e0e0e0",
         },

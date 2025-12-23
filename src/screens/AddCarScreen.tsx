@@ -18,7 +18,7 @@ import { RootStackParamList } from "../navigation/types";
 
 type AddCarScreenProps = NativeStackScreenProps<RootStackParamList, "AddCar">;
 
-const PURPLE = "#7C3AED";
+const PURPLE = "#9B72D2";
 
 export const AddCarScreen = ({ navigation }: AddCarScreenProps) => {
   const [name, setName] = useState("");
@@ -466,14 +466,17 @@ const styles = StyleSheet.create({
   footer: {
     padding: 20,
     paddingBottom: Platform.OS === "ios" ? 34 : 20,
-    borderTopWidth: 1,
+
     borderTopColor: "#f0f0f0",
+    alignItems: "center",
   },
   submitButton: {
     backgroundColor: PURPLE,
+    width: "50%",
     paddingVertical: 16,
     borderRadius: 25,
     alignItems: "center",
+    justifyContent: "center",
   },
   submitButtonDisabled: {
     opacity: 0.6,

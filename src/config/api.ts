@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Get base URL from env or fallback
-const BASE_URL = "https://cars-mock-api-new-6e7a623e6570.herokuapp.com";
+const BASE_URL = "";
 
 // Create axios instance
 export const apiClient = axios.create({

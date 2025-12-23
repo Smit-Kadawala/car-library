@@ -5,6 +5,7 @@ import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomTabNavigator } from "./src/navigation/BottomTabNavigator";
 import { RootStackParamList } from "./src/navigation/types";
+import { AddCarScreen } from "./src/screens/AddCarScreen";
 import { CarDetailScreen } from "./src/screens/CarDetailScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -39,6 +40,14 @@ const App = () => {
                 animation: "slide_from_right",
                 gestureEnabled: true,
                 fullScreenGestureEnabled: true,
+              }}
+            />
+            <Stack.Screen
+              name="AddCar"
+              component={AddCarScreen}
+              options={{
+                presentation: "card",
+                animation: "slide_from_right",
               }}
             />
           </Stack.Navigator>

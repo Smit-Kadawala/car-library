@@ -154,7 +154,10 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.primaryButton}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate("AddCar")}
+        >
           <Text style={styles.primaryButtonText}>New Car</Text>
         </TouchableOpacity>
       </View>

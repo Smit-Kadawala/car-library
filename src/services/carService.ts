@@ -11,6 +11,14 @@ export type FilterOption = {
   tags?: string[];
 };
 
+export type CreateCarData = {
+  name: string;
+  description?: string;
+  carType: string;
+  tags: string[];
+  imageUrl: string;
+};
+
 export const carService = {
   // Get all cars with optional sorting, filtering, and search
   getAllCars: async (
@@ -44,6 +52,12 @@ export const carService = {
   // Get car by ID
   getCarById: async (id: string): Promise<CarDetail> => {
     const response = await apiClient.get<CarDetail>(`/api/cars/${id}`);
+    return response.data;
+  },
+
+  // Create new car
+  createCar: async (data: CreateCarData): Promise<Car> => {
+    const response = await apiClient.post<Car>("/api/cars", data);
     return response.data;
   },
 

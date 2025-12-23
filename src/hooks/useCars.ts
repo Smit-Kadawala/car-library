@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { carService, FilterOption } from "../services/carService";
+import {
+  carService,
+  CreateCarData,
+  FilterOption,
+} from "../services/carService";
 
 export type SortOption = {
   sortBy: "name" | "createdAt";
@@ -43,12 +47,24 @@ export const useTags = () => {
   });
 };
 
+// Create car
+export const useCreateCar = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateCarData) => carService.createCar(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cars"] });
+    },
+  });
+};
+
 // Delete car
 export const useDeleteCar = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: carService.deleteCar,
+    mutationFn: (id: number) => carService.deleteCar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cars"] });
     },

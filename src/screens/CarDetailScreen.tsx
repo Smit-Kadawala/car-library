@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { useCar, useDeleteCar } from "../hooks/useCars";
 import { RootStackParamList } from "../navigation/types";
 
@@ -29,9 +30,10 @@ export const CarDetailScreen = ({
 }: CarDetailScreenProps) => {
   const { car } = route.params;
   const [failed, setFailed] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // ✅ Use React Query hooks
+  // Use React Query hooks
   const { data: carDetail, isLoading, error } = useCar(car.id);
   const deleteCar = useDeleteCar();
 
@@ -39,24 +41,30 @@ export const CarDetailScreen = ({
   const isAutomatic = carDetail?.carType === "automatic";
 
   const handleDelete = () => {
-    Alert.alert("Delete Car", "Are you sure you want to delete this car?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          deleteCar.mutate(carDetail!.id, {
-            onSuccess: () => {
-              Alert.alert("Success", "Car deleted successfully");
-              navigation.goBack();
-            },
-            onError: () => {
-              Alert.alert("Error", "Failed to delete car");
-            },
-          });
-        },
+    setDeleteModalVisible(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    const carId =
+      typeof carDetail!.id === "string"
+        ? parseInt(carDetail!.id, 10)
+        : carDetail!.id;
+
+    deleteCar.mutate(carId, {
+      onSuccess: () => {
+        setDeleteModalVisible(false);
+        Alert.alert("Success", "Car deleted successfully", [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]);
       },
-    ]);
+      onError: () => {
+        setDeleteModalVisible(false);
+        Alert.alert("Error", "Failed to delete car");
+      },
+    });
   };
 
   if (isLoading) {
@@ -169,6 +177,15 @@ export const CarDetailScreen = ({
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
+        carName={carDetail.name}
+        onCancel={() => setDeleteModalVisible(false)}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleteCar.isPending}
+      />
     </View>
   );
 };

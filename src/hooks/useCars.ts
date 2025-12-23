@@ -1,16 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { carService } from "../services/carService";
+import { carService, FilterOption } from "../services/carService";
 
 export type SortOption = {
   sortBy: "name" | "createdAt";
   sortOrder: "ASC" | "DESC";
 };
 
-// Get all cars with optional sorting
-export const useCars = (sortOption?: SortOption) => {
+// Get all cars with optional sorting and filtering
+export const useCars = (
+  sortOption?: SortOption,
+  filterOption?: FilterOption
+) => {
   return useQuery({
-    queryKey: ["cars", sortOption],
-    queryFn: () => carService.getAllCars(sortOption),
+    queryKey: ["cars", sortOption, filterOption],
+    queryFn: () => carService.getAllCars(sortOption, filterOption),
   });
 };
 
@@ -23,6 +26,22 @@ export const useCar = (id: string) => {
   });
 };
 
+// Get car types
+export const useCarTypes = () => {
+  return useQuery({
+    queryKey: ["carTypes"],
+    queryFn: carService.getCarTypes,
+  });
+};
+
+// Get tags
+export const useTags = () => {
+  return useQuery({
+    queryKey: ["tags"],
+    queryFn: carService.getTags,
+  });
+};
+
 // Delete car
 export const useDeleteCar = () => {
   const queryClient = useQueryClient();
@@ -30,7 +49,6 @@ export const useDeleteCar = () => {
   return useMutation({
     mutationFn: carService.deleteCar,
     onSuccess: () => {
-      // Refresh the cars list after delete
       queryClient.invalidateQueries({ queryKey: ["cars"] });
     },
   });

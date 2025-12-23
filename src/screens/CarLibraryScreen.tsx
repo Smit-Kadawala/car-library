@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CarCard } from "../components/CarCard";
+import { FilterModal, FilterOption } from "../components/FilterModal";
 import { SortModal, SortOption } from "../components/SortModal";
 import { useCars } from "../hooks/useCars";
 import { BottomTabParamList, RootStackParamList } from "../navigation/types";
@@ -31,13 +32,23 @@ type CarLibraryScreenProps = {
 export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
   const [search, setSearch] = useState("");
   const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>({
     sortBy: "createdAt",
     sortOrder: "DESC",
   });
+  const [filterOption, setFilterOption] = useState<FilterOption>({
+    carType: undefined,
+    tags: [],
+  });
 
-  // Use React Query hook with sort option
-  const { data: cars, isLoading, error, refetch } = useCars(sortOption);
+  // Use React Query hook with sort and filter options
+  const {
+    data: cars,
+    isLoading,
+    error,
+    refetch,
+  } = useCars(sortOption, filterOption);
 
   const handleCardPress = (car: Car) => {
     navigation.navigate("CarDetail", { car });
@@ -45,7 +56,11 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
 
   const handleSortSelect = (option: SortOption) => {
     setSortOption(option);
-    // Force refetch with new sort option
+    setTimeout(() => refetch(), 100);
+  };
+
+  const handleFilterApply = (filter: FilterOption) => {
+    setFilterOption(filter);
     setTimeout(() => refetch(), 100);
   };
 
@@ -79,6 +94,8 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
     <CarCard item={item} onPress={handleCardPress} />
   );
 
+  const hasActiveFilters = filterOption.carType || filterOption.tags.length > 0;
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.headerRow}>
@@ -110,8 +127,19 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         >
           <Ionicons name="swap-vertical" size={20} color="#1a1a1a" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} accessibilityLabel="Filter">
-          <Ionicons name="funnel-outline" size={20} color="#1a1a1a" />
+        <TouchableOpacity
+          style={[
+            styles.iconButton,
+            hasActiveFilters && styles.iconButtonActive,
+          ]}
+          accessibilityLabel="Filter"
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Ionicons
+            name="funnel-outline"
+            size={20}
+            color={hasActiveFilters ? "#7C3AED" : "#1a1a1a"}
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} accessibilityLabel="Select">
           <Ionicons name="checkmark-circle-outline" size={20} color="#1a1a1a" />
@@ -134,6 +162,13 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         onClose={() => setSortModalVisible(false)}
         onSelect={handleSortSelect}
         currentSort={sortOption}
+      />
+
+      <FilterModal
+        visible={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        onApply={handleFilterApply}
+        currentFilter={filterOption}
       />
     </SafeAreaView>
   );
@@ -196,6 +231,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  iconButtonActive: {
+    backgroundColor: "#f0f8ff",
+    borderColor: "#7C3AED",
   },
   listContent: {
     paddingBottom: 16,

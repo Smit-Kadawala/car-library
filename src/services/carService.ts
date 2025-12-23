@@ -6,14 +6,30 @@ export type SortOption = {
   sortOrder: "ASC" | "DESC";
 };
 
+export type FilterOption = {
+  carType?: string;
+  tags?: string[];
+};
+
 export const carService = {
-  // Get all cars with optional sorting
-  getAllCars: async (sortOption?: SortOption): Promise<Car[]> => {
+  // Get all cars with optional sorting and filtering
+  getAllCars: async (
+    sortOption?: SortOption,
+    filterOption?: FilterOption
+  ): Promise<Car[]> => {
     const params: Record<string, string> = {};
 
     if (sortOption) {
       params.sortBy = sortOption.sortBy;
       params.sortOrder = sortOption.sortOrder;
+    }
+
+    if (filterOption?.carType) {
+      params.carType = filterOption.carType;
+    }
+
+    if (filterOption?.tags && filterOption.tags.length > 0) {
+      params.tags = filterOption.tags.join(",");
     }
 
     const response = await apiClient.get<Car[]>("/api/cars", { params });
@@ -31,15 +47,15 @@ export const carService = {
     await apiClient.delete(`/api/cars/${id}`);
   },
 
-  // Create car (placeholder for future)
-  // createCar: async (data: Partial<Car>): Promise<Car> => {
-  //   const response = await apiClient.post<Car>('/api/cars', data);
-  //   return response.data;
-  // },
+  // Get available car types
+  getCarTypes: async (): Promise<string[]> => {
+    const response = await apiClient.get<string[]>("/api/cars/types");
+    return response.data;
+  },
 
-  // Update car (placeholder for future)
-  // updateCar: async (id: string, data: Partial<Car>): Promise<Car> => {
-  //   const response = await apiClient.put<Car>(`/api/cars/${id}`, data);
-  //   return response.data;
-  // },
+  // Get available tags
+  getTags: async (): Promise<string[]> => {
+    const response = await apiClient.get<string[]>("/api/cars/tags");
+    return response.data;
+  },
 };

@@ -184,7 +184,7 @@ export const CarDetailScreen = ({
         carName={carDetail.name}
         onCancel={() => setDeleteModalVisible(false)}
         onConfirm={() => {
-          handleDeleteConfirm;
+          handleDeleteConfirm();
         }}
         isDeleting={deleteCar.isPending}
       />

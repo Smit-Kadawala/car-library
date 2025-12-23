@@ -20,6 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Image } from "expo-image";
 import { CarCard } from "../components/CarCard";
 import { FilterModal, FilterOption } from "../components/FilterModal";
 import { SortModal, SortOption } from "../components/SortModal";
@@ -248,14 +249,21 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          memoizedCars.length === 0 && debouncedSearch.length > 0 && !isLoading
+            ? styles.emptyListContent
+            : undefined
+        }
         ListEmptyComponent={
           debouncedSearch.length > 0 && !isLoading ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyText}>No cars found</Text>
-
+              <Image
+                source={require("../assets/nodata.png")}
+                style={styles.emptyImage}
+                contentFit="contain"
+              />
               <Text style={styles.emptySubtext}>
-                Try a different keyword or filters
+                No result found with `{debouncedSearch}`
               </Text>
             </View>
           ) : null
@@ -364,6 +372,9 @@ const styles = StyleSheet.create({
   column: {
     gap: 12,
   },
+  emptyListContent: {
+    flexGrow: 1,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: "center",
@@ -383,7 +394,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 60,
+    minHeight: 400,
+  },
+  emptyImage: {
+    width: 100,
+    height: 100,
   },
   emptyText: {
     fontSize: 18,

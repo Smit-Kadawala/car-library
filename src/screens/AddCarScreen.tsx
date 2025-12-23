@@ -452,15 +452,14 @@ const styles = StyleSheet.create({
   tagChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#9B72D21A",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 8,
     gap: 6,
   },
   tagChipText: {
     fontSize: 14,
-    color: "#666",
     fontWeight: "500",
   },
   footer: {

@@ -1,50 +1,120 @@
-# Welcome to your Expo app 👋
+## Car Library – React Native / Expo App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Car Library is a mobile app built with **Expo**, **React Native**, **React Navigation**, and **TanStack Query** for managing a collection of cars with search, filter, sort, and favorites support.
 
-## Get started
+---
 
-1. Install dependencies
+### Setup Instructions
 
-   ```bash
-   npm install
-   ```
+- **Prerequisites**
 
-2. Start the app
+  - **Node.js** (LTS recommended)
+  - **npm** or **yarn** or **bun**
 
-   ```bash
-   npx expo start
-   ```
+- **Install dependencies**
 
-In the output, you'll find options to open the app in a
+  ```bash
+  npm install
+  # or
+  yarn install
+  # or
+  bun install
+  ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Run the app (development)**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+  ```bash
+  # Start Metro bundler
+  bun start
+  # or
+  npx expo start
+  ```
 
-## Get a fresh project
+  Then choose one of:
 
-When you're ready, run:
+  - Press **i** to open in iOS Simulator (macOS only)
+  - Press **a** to open in Android emulator
+  - Scan the QR code with the **Expo Go** app on your device
 
-```bash
-npm run reset-project
-```
+- **Platform-specific shortcuts**
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+  ```bash
+  bun run ios     # iOS simulator
+  bun run android # Android emulator
+  bun run web     # Web
+  ```
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+### Project Structure (high level)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **`App.tsx`** – App entrypoint / navigation container
+- **`src/navigation`** – Bottom tab + stack navigation setup
+- **`src/screens`**
+  - `CarLibraryScreen.tsx` – Car listing, search, filters, sorting, favorites
+  - `CarDetailScreen.tsx` – Car details, delete flow, image, tags, etc.
+  - `AddCarScreen.tsx` – Create a new car entry form
+  - `HomeScreen.tsx`, `ProfileScreen.tsx`, `ServiceScreen.tsx` – Other tabs
+- **`src/components`**
+  - `CarCard.tsx` – Card UI for each car in the grid
+  - `FilterModal.tsx`, `SortModal.tsx`, `DeleteConfirmModal.tsx`
+- **`src/hooks`**
+  - `useCars.ts` – Fetching and caching cars (TanStack Query)
+  - `useFavorites.tsx` – Local favorites handling (AsyncStorage)
+  - `useDebounce.ts` – Debounced values for search
+- **`src/services`**
+  - `carService.ts` – API client for car endpoints
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+### Features
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Car Library Grid**
+
+  - 2-column **FlatList** grid with virtualization props optimized for performance
+  - Each item uses `CarCard` with image, name, and type badge.
+
+- **Search**
+
+  - Debounced search input using a custom `useDebounce` hook
+  - Search indicator (“Searching…”) while querying
+  - Empty state with illustration when no results match the query
+
+- **Sorting & Filtering**
+
+  - **SortModal** to sort by `createdAt` and other supported fields (ASC/DESC)
+  - **FilterModal** to filter by car type and tags
+  - Visual indicator when filters are active
+
+- **Favorites**
+
+  - Heart icon toggle in the library toolbar to show **favorites only**
+  - `useFavorites` hook backed by `AsyncStorage`
+  - Multiple empty states:
+    - No favorites yet
+    - No favorites matching current filters
+
+- **Car Details**
+
+  - Detailed view with large image (with fallback), description, tags, type, and metadata
+  - Delete confirmation modal using `DeleteConfirmModal`
+
+- **Add Car**
+
+  - Form screen to add a new car with fields like name, description, type, tags, and image URL
+  - Uses the shared service and query cache to update list after creating a car
+
+- **UX / UI Enhancements**
+  - **expo-image** for performant image rendering with fallback assets
+  - Animated “Cancel” text in search bar using `react-native-reanimated`
+  - Centered empty states with nodata illustration
+  - Safe area handling via `react-native-safe-area-context`
+
+---
+
+### Environment / API
+
+- API configuration is defined in `src/config/api.ts` and consumed by `src/services/carService.ts`.
+- If you point to a different backend:
+  - Update the **base URL** and any required headers in `api.ts`.
+  - Ensure the response types align with `src/types/Car.ts`.

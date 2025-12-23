@@ -46,6 +46,10 @@ Car Library is a mobile app built with **Expo**, **React Native**, **React Navig
 
 ---
 
+- add BASE_URL in api.ts
+
+---
+
 ### Project Structure (high level)
 
 - **`App.tsx`** – App entrypoint / navigation container

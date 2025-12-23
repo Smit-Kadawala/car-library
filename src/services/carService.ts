@@ -12,10 +12,11 @@ export type FilterOption = {
 };
 
 export const carService = {
-  // Get all cars with optional sorting and filtering
+  // Get all cars with optional sorting, filtering, and search
   getAllCars: async (
     sortOption?: SortOption,
-    filterOption?: FilterOption
+    filterOption?: FilterOption,
+    searchQuery?: string
   ): Promise<Car[]> => {
     const params: Record<string, string> = {};
 
@@ -30,6 +31,10 @@ export const carService = {
 
     if (filterOption?.tags && filterOption.tags.length > 0) {
       params.tags = filterOption.tags.join(",");
+    }
+
+    if (searchQuery && searchQuery.trim()) {
+      params.search = searchQuery.trim();
     }
 
     const response = await apiClient.get<Car[]>("/api/cars", { params });

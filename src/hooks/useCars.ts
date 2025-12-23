@@ -6,14 +6,15 @@ export type SortOption = {
   sortOrder: "ASC" | "DESC";
 };
 
-// Get all cars with optional sorting and filtering
+// Get all cars with optional sorting, filtering, and search
 export const useCars = (
   sortOption?: SortOption,
-  filterOption?: FilterOption
+  filterOption?: FilterOption,
+  searchQuery?: string
 ) => {
   return useQuery({
-    queryKey: ["cars", sortOption, filterOption],
-    queryFn: () => carService.getAllCars(sortOption, filterOption),
+    queryKey: ["cars", sortOption, filterOption, searchQuery],
+    queryFn: () => carService.getAllCars(sortOption, filterOption, searchQuery),
   });
 };
 

@@ -24,7 +24,7 @@ import { CarCard } from "../components/CarCard";
 import { FilterModal, FilterOption } from "../components/FilterModal";
 import { SortModal, SortOption } from "../components/SortModal";
 import { useCars } from "../hooks/useCars";
-import { useDebounce } from "../hooks/useDebounce";
+import { useFavorites } from "../hooks/useFavorites";
 import { BottomTabParamList, RootStackParamList } from "../navigation/types";
 import { Car } from "../types/Car";
 
@@ -37,12 +37,24 @@ type CarLibraryScreenProps = {
   navigation: CarLibraryScreenNavigationProp;
 };
 
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
   const [searchInput, setSearchInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>({
     sortBy: "createdAt",
     sortOrder: "DESC",
@@ -58,7 +70,7 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
     isLoading,
     error,
   } = useCars(sortOption, filterOption, debouncedSearch);
-  const memoizedCars = useMemo(() => cars ?? [], [cars]);
+  const { favorites, loading: favoritesLoading } = useFavorites();
 
   const cancelAnim = useSharedValue(0);
   const cancelStyle = useAnimatedStyle(() => ({
@@ -71,6 +83,13 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
       setIsInitialLoading(false);
     }
   }, [cars, isInitialLoading]);
+
+  // Filter cars based on favorites
+  const displayCars = useMemo(() => {
+    if (!cars) return [];
+    if (!showFavoritesOnly) return cars;
+    return cars.filter((car) => favorites.includes(car.id));
+  }, [cars, showFavoritesOnly, favorites]);
 
   const handleFocusSearch = () => {
     setIsSearching(true);
@@ -88,9 +107,13 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
     navigation.navigate("CarDetail", { car });
   };
 
+  const handleToggleFavorites = () => {
+    setShowFavoritesOnly(!showFavoritesOnly);
+  };
+
   const hasActiveFilters = filterOption.carType || filterOption.tags.length > 0;
 
-  if (isInitialLoading && isLoading) {
+  if ((isInitialLoading && isLoading) || favoritesLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
@@ -112,20 +135,51 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
   }
 
   const renderEmptyComponent = () => {
-    if (!debouncedSearch || isLoading) return null;
+    if (isLoading) return null;
 
-    return (
-      <View style={styles.emptyContainer}>
-        <Image
-          source={require("../assets/nodata.png")}
-          style={styles.emptyImage}
-          contentFit="contain"
-        />
-        <Text style={styles.emptySubtext}>
-          No result found with "{debouncedSearch}"
-        </Text>
-      </View>
-    );
+    if (showFavoritesOnly && favorites.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="heart-outline" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No favorites yet</Text>
+          <Text style={styles.emptySubtext}>
+            Tap the heart icon on cars to add them to favorites
+          </Text>
+        </View>
+      );
+    }
+
+    if (showFavoritesOnly && displayCars.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Image
+            source={require("../assets/nodata.png")}
+            style={styles.emptyImage}
+            contentFit="contain"
+          />
+          <Text style={styles.emptySubtext}>
+            No favorite cars match your filters
+          </Text>
+        </View>
+      );
+    }
+
+    if (debouncedSearch && displayCars.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Image
+            source={require("../assets/nodata.png")}
+            style={styles.emptyImage}
+            contentFit="contain"
+          />
+          <Text style={styles.emptySubtext}>
+            No result found with "{debouncedSearch}"
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -190,11 +244,17 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity
+              style={[
+                styles.iconButton,
+                showFavoritesOnly && styles.iconButtonFavorite,
+              ]}
+              onPress={handleToggleFavorites}
+            >
               <Ionicons
-                name="checkmark-circle-outline"
+                name={showFavoritesOnly ? "heart" : "heart-outline"}
                 size={20}
-                color="#1a1a1a"
+                color={showFavoritesOnly ? "#FF3B30" : "#1a1a1a"}
               />
             </TouchableOpacity>
           </>
@@ -209,22 +269,23 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
       )}
 
       <FlatList
-        data={memoizedCars}
+        data={displayCars}
         renderItem={({ item }) => (
           <CarCard item={item} onPress={handleCardPress} />
         )}
         keyExtractor={(item) => item.id}
         numColumns={2}
-        columnWrapperStyle={styles.column}
+        columnWrapperStyle={displayCars.length > 1 ? styles.column : undefined}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={
-          memoizedCars.length === 0 && debouncedSearch.length > 0 && !isLoading
+          displayCars.length === 0
             ? styles.emptyListContent
-            : undefined
+            : styles.listContent
         }
         ListEmptyComponent={renderEmptyComponent}
+        extraData={favorites}
       />
 
       <SortModal
@@ -311,9 +372,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f8ff",
     borderColor: "#7C3AED",
   },
+  iconButtonFavorite: {
+    backgroundColor: "#FFF5F5",
+    borderColor: "#FF3B30",
+  },
   cancelText: {
     color: "#E53935",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  favoriteBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF5F5",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: "#FF3B30",
+  },
+  favoriteBannerText: {
+    fontSize: 14,
+    color: "#FF3B30",
     fontWeight: "600",
   },
   listLoader: {
@@ -329,6 +411,9 @@ const styles = StyleSheet.create({
   },
   column: {
     gap: 12,
+  },
+  listContent: {
+    paddingBottom: 16,
   },
   emptyListContent: {
     flexGrow: 1,
@@ -353,9 +438,17 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
   },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#666",
+    marginTop: 16,
+  },
   emptySubtext: {
     fontSize: 14,
     color: "#999",
     marginTop: 8,
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });

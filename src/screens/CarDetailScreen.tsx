@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal";
 import { useCar, useDeleteCar } from "../hooks/useCars";
+import { useFavorites } from "../hooks/useFavorites";
 import { RootStackParamList } from "../navigation/types";
 
 const FALLBACK_IMAGE = require("../assets/fallback.png");
@@ -35,9 +36,11 @@ export const CarDetailScreen = ({
 
   const { data: carDetail, isLoading, error } = useCar(car.id);
   const deleteCar = useDeleteCar();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const source = failed ? FALLBACK_IMAGE : { uri: car.imageUrl };
   const isAutomatic = carDetail?.carType === "automatic";
+  const favorite = isFavorite(car.id);
 
   const handleDelete = () => {
     setDeleteModalVisible(true);
@@ -66,6 +69,10 @@ export const CarDetailScreen = ({
         Alert.alert("Error", "Failed to delete car");
       },
     });
+  };
+
+  const handleToggleFavorite = () => {
+    toggleFavorite(car.id);
   };
 
   if (isLoading) {
@@ -106,20 +113,33 @@ export const CarDetailScreen = ({
     });
   };
 
-  const typeColors = isAutomatic
-    ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
-    : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
+  const typeColors = !isAutomatic
+    ? { backgroundColor: "#D6F9DB", borderColor: "#D6F9DB", color: "#10A024" }
+    : { backgroundColor: "#F5E7D0", borderColor: "#F5E7D0", color: "#997C4C" };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-      <TouchableOpacity
-        style={[styles.closeButton, { top: insets.top + 16 }]}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="close" size={28} color="#333" />
-      </TouchableOpacity>
+      <View style={[styles.headerButtons, { top: insets.top + 16 }]}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="close" size={28} color="#333" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={handleToggleFavorite}
+        >
+          <Ionicons
+            name={favorite ? "heart" : "heart-outline"}
+            size={24}
+            color={favorite ? "#FF3B30" : "#333"}
+          />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -203,10 +223,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  closeButton: {
+  headerButtons: {
     position: "absolute",
+    left: 16,
     right: 16,
     zIndex: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  favoriteButton: {
     width: 40,
     height: 40,
     borderRadius: 20,

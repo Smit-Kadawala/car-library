@@ -286,6 +286,10 @@ export const CarLibraryScreen = ({ navigation }: CarLibraryScreenProps) => {
         }
         ListEmptyComponent={renderEmptyComponent}
         extraData={favorites}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        removeClippedSubviews
       />
 
       <SortModal

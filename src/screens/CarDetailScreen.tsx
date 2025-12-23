@@ -33,7 +33,6 @@ export const CarDetailScreen = ({
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Use React Query hooks
   const { data: carDetail, isLoading, error } = useCar(car.id);
   const deleteCar = useDeleteCar();
 
@@ -45,10 +44,12 @@ export const CarDetailScreen = ({
   };
 
   const handleDeleteConfirm = () => {
+    if (!carDetail) return;
+
     const carId =
-      typeof carDetail!.id === "string"
-        ? parseInt(carDetail!.id, 10)
-        : carDetail!.id;
+      typeof carDetail.id === "string"
+        ? parseInt(carDetail.id, 10)
+        : carDetail.id;
 
     deleteCar.mutate(carId, {
       onSuccess: () => {
@@ -72,7 +73,7 @@ export const CarDetailScreen = ({
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1f8ef1" />
+          <ActivityIndicator size="large" color="#7C3AED" />
           <Text style={styles.loadingText}>Loading car details...</Text>
         </View>
       </View>
@@ -85,6 +86,12 @@ export const CarDetailScreen = ({
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <View style={styles.loadingContainer}>
           <Text style={styles.errorText}>Failed to load car details</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.retryButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -99,9 +106,9 @@ export const CarDetailScreen = ({
     });
   };
 
-  const typeColors = !isAutomatic
-    ? { backgroundColor: "#D6F9DB", borderColor: "#D6F9DB", color: "#10A024" }
-    : { backgroundColor: "#F5E7D0", borderColor: "#F5E7D0", color: "#997C4C" };
+  const typeColors = isAutomatic
+    ? { backgroundColor: "#E5F6EB", borderColor: "#2F9E55", color: "#2F9E55" }
+    : { backgroundColor: "#F5E7D0", borderColor: "#997C4C", color: "#997C4C" };
 
   return (
     <View style={styles.container}>
@@ -142,10 +149,12 @@ export const CarDetailScreen = ({
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DESCRIPTION</Text>
-          <Text style={styles.description}>{carDetail.description}</Text>
-        </View>
+        {carDetail.description && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>DESCRIPTION</Text>
+            <Text style={styles.description}>{carDetail.description}</Text>
+          </View>
+        )}
 
         <View style={styles.divider} />
 
@@ -178,14 +187,11 @@ export const CarDetailScreen = ({
         </View>
       </ScrollView>
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
         visible={deleteModalVisible}
         carName={carDetail.name}
         onCancel={() => setDeleteModalVisible(false)}
-        onConfirm={() => {
-          handleDeleteConfirm();
-        }}
+        onConfirm={handleDeleteConfirm}
         isDeleting={deleteCar.isPending}
       />
     </View>
@@ -232,6 +238,18 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     color: "#d32f2f",
+    fontWeight: "600",
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#7C3AED",
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 14,
     fontWeight: "600",
   },
   carName: {
@@ -298,11 +316,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#9B72D2",
+    borderColor: "#1f8ef1",
   },
   tagText: {
     fontSize: 14,
     fontWeight: "600",
+    color: "#1f8ef1",
     textTransform: "capitalize",
   },
   footerRow: {
